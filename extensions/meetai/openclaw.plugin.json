@@ -1,0 +1,66 @@
+{
+  "id": "meetai",
+  "name": "MeetAI",
+  "description": "会议音频处理：转写、纪要、思维导图、流程图（输出 Markdown）",
+  "tools": [
+    "meeting_transcribe",
+    "meeting_summarize",
+    "meeting_mindmap",
+    "meeting_diagram"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "description": "是否启用扩展",
+        "default": true
+      },
+      "outputDir": {
+        "type": "string",
+        "description": "输出目录路径",
+        "default": "~/.openclaw/workspace/meetings"
+      },
+      "asr": {
+        "type": "object",
+        "description": "ASR 服务配置",
+        "properties": {
+          "serviceUrl": {
+            "type": "string",
+            "description": "ASR HTTP 服务地址",
+            "default": "http://127.0.0.1:18001"
+          },
+          "appid": {
+            "type": "string",
+            "description": "ASR 服务 AppID（可选）"
+          },
+          "accessKeyId": {
+            "type": "string",
+            "description": "ASR 服务 AccessKeyId（可选）"
+          },
+          "accessKeySecret": {
+            "type": "string",
+            "description": "ASR 服务 AccessKeySecret（可选）"
+          }
+        }
+      },
+      "renderer": {
+        "type": "object",
+        "description": "渲染服务配置（可选）",
+        "properties": {
+          "markmapUrl": {
+            "type": "string",
+            "description": "Markmap 渲染服务地址",
+            "default": "http://localhost:3000"
+          },
+          "mermaidUrl": {
+            "type": "string",
+            "description": "Mermaid 渲染服务地址",
+            "default": "http://localhost:3001"
+          }
+        }
+      }
+    }
+  }
+}

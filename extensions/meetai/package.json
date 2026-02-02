@@ -1,0 +1,19 @@
+{
+  "name": "@openclaw/meetai",
+  "version": "0.1.0",
+  "description": "MeetAI 会议处理扩展：音频转写、纪要生成、思维导图、流程图（纯 TypeScript 实现，输出 Markdown）",
+  "type": "module",
+  "dependencies": {},
+  "devDependencies": {
+    "openclaw": "workspace:*",
+    "@types/node": "^22.0.0"
+  },
+  "peerDependencies": {
+    "openclaw": "*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
