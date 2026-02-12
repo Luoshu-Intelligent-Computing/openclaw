@@ -28,6 +28,10 @@ export function registerAgentCommands(program: Command, args: { agentChannelOpti
     .option("--thinking <level>", "Thinking level: off | minimal | low | medium | high")
     .option("--verbose <on|off>", "Persist agent verbose level for the session")
     .option(
+      "--tool-choice <value>",
+      "Tool choice override: auto | none | required | function:<toolName>",
+    )
+    .option(
       "--channel <channel>",
       `Delivery channel: ${args.agentChannelOptions} (default: ${DEFAULT_CHAT_CHANNEL})`,
     )

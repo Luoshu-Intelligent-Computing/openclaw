@@ -1,4 +1,5 @@
 import { Type } from "@sinclair/typebox";
+import { optionalStringEnum } from "../../../agents/schema/typebox.js";
 import { NonEmptyString, SessionLabelString } from "./primitives.js";
 
 export const AgentEventSchema = Type.Object(
@@ -64,6 +65,8 @@ export const AgentParamsSchema = Type.Object(
     timeout: Type.Optional(Type.Integer({ minimum: 0 })),
     lane: Type.Optional(Type.String()),
     extraSystemPrompt: Type.Optional(Type.String()),
+    toolChoiceMode: optionalStringEnum(["auto", "none", "required", "function"] as const),
+    toolChoiceName: Type.Optional(Type.String()),
     idempotencyKey: NonEmptyString,
     label: Type.Optional(SessionLabelString),
     spawnedBy: Type.Optional(Type.String()),

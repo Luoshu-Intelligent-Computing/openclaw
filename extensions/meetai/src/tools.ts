@@ -14,7 +14,7 @@
  */
 
 import { Type } from "@sinclair/typebox";
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
+import { jsonResult, type OpenClawPluginApi } from "openclaw/plugin-sdk";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { AsrClient, type AsrConfig } from "./asr-client.js";
@@ -66,7 +66,7 @@ export function createMeetAITools(config: ToolsConfig) {
       name: "meeting_transcribe",
       description: `将会议音频转写为文本。支持说话人分离。
 输出：Markdown 格式的转写文本，保存到 ${outputDir}/ 目录，可被 OpenClaw memory_search 索引。`,
-      input: Type.Object({
+      parameters: Type.Object({
         audio_path: Type.String({
           description: "音频文件路径（支持 wav/mp3/m4a 格式）",
         }),
@@ -81,7 +81,10 @@ export function createMeetAITools(config: ToolsConfig) {
           }),
         ),
       }),
-      handler: async (input: { audio_path: string; optimize?: boolean; output_name?: string }) => {
+      execute: async (
+        _toolCallId,
+        input: { audio_path: string; optimize?: boolean; output_name?: string },
+      ) => {
         try {
           // 1. ASR 转写
           const asrResult = await asrClient.transcribe(input.audio_path);
@@ -117,19 +120,19 @@ ${transcriptText}
           // 4. 保存文件
           const outputPath = await saveMarkdown(outputDir, outputName, markdownContent);
 
-          return {
+          return jsonResult({
             status: "success",
             message: "转写完成",
             output_file: outputPath,
             order_id: asrResult.orderId,
             tip: "转写结果已保存为 Markdown，可使用 memory_search 检索内容",
-          };
+          });
         } catch (error) {
-          return {
+          return jsonResult({
             status: "error",
             message: error instanceof Error ? error.message : "转写失败",
             tip: "请确保 ASR 服务已启动",
-          };
+          });
         }
       },
     },
@@ -140,7 +143,7 @@ ${transcriptText}
       description: `从转写文本生成结构化会议纪要。
 包含：会议概要、关键决策、待办事项（Action Items）、参会人员等。
 输出：Markdown 格式，保存到 ${outputDir}/ 目录。`,
-      input: Type.Object({
+      parameters: Type.Object({
         source: Type.String({
           description: "转写文本文件路径（.md）或直接输入文本内容",
         }),
@@ -150,7 +153,7 @@ ${transcriptText}
           }),
         ),
       }),
-      handler: async (input: { source: string; output_name?: string }) => {
+      execute: async (_toolCallId, input: { source: string; output_name?: string }) => {
         try {
           // 1. 读取源内容
           let sourceContent: string;
@@ -190,16 +193,16 @@ ${sourceContent}
           const outputName = input.output_name || generateOutputName("meeting", "_summary.md");
           const outputPath = await saveMarkdown(outputDir, outputName, summary);
 
-          return {
+          return jsonResult({
             status: "success",
             message: "会议纪要生成完成",
             output_file: outputPath,
-          };
+          });
         } catch (error) {
-          return {
+          return jsonResult({
             status: "error",
             message: error instanceof Error ? error.message : "纪要生成失败",
-          };
+          });
         }
       },
     },
@@ -209,7 +212,7 @@ ${sourceContent}
       name: "meeting_mindmap",
       description: `从会议内容生成思维导图。
 输出：Markdown 格式（Markmap 语法），保存到 ${outputDir}/ 目录。如果渲染服务可用，还会生成 PNG 图片。`,
-      input: Type.Object({
+      parameters: Type.Object({
         source: Type.String({
           description: "转写/纪要文本文件路径（.md）或直接输入文本内容",
         }),
@@ -224,7 +227,10 @@ ${sourceContent}
           }),
         ),
       }),
-      handler: async (input: { source: string; output_name?: string; render_image?: boolean }) => {
+      execute: async (
+        _toolCallId,
+        input: { source: string; output_name?: string; render_image?: boolean },
+      ) => {
         try {
           // 1. 读取源内容
           let sourceContent: string;
@@ -271,18 +277,18 @@ ${sourceContent}
             }
           }
 
-          return {
+          return jsonResult({
             status: "success",
             message: "思维导图生成完成",
             markdown_file: markdownPath,
             image_file: imagePath,
             tip: imagePath ? "已生成 Markdown 和 PNG 图片" : "已生成 Markdown（渲染服务不可用，未生成图片）",
-          };
+          });
         } catch (error) {
-          return {
+          return jsonResult({
             status: "error",
             message: error instanceof Error ? error.message : "思维导图生成失败",
-          };
+          });
         }
       },
     },
@@ -292,7 +298,7 @@ ${sourceContent}
       name: "meeting_diagram",
       description: `根据描述生成流程图或时序图。
 使用 Mermaid 语法，输出 Markdown，保存到 ${outputDir}/ 目录。如果渲染服务可用，还会生成 PNG 图片。`,
-      input: Type.Object({
+      parameters: Type.Object({
         description: Type.String({
           description: "图表描述（自然语言），例如：'用户登录流程' 或 '订单处理时序'",
         }),
@@ -312,7 +318,7 @@ ${sourceContent}
           }),
         ),
       }),
-      handler: async (input: {
+      execute: async (_toolCallId, input: {
         description: string;
         diagram_type?: string;
         output_name?: string;
@@ -362,21 +368,20 @@ ${mermaidCode.trim()}
             }
           }
 
-          return {
+          return jsonResult({
             status: "success",
             message: "图表生成完成",
             markdown_file: markdownPath,
             image_file: imagePath,
             tip: imagePath ? "已生成 Markdown 和 PNG 图片" : "已生成 Markdown（渲染服务不可用，未生成图片）",
-          };
+          });
         } catch (error) {
-          return {
+          return jsonResult({
             status: "error",
             message: error instanceof Error ? error.message : "图表生成失败",
-          };
+          });
         }
       },
     },
   ];
 }
-

@@ -12,6 +12,10 @@ export type AgentStreamParams = {
   /** Provider stream params override (best-effort). */
   temperature?: number;
   maxTokens?: number;
+  /** Tool choice override for tool-capable providers. */
+  toolChoiceMode?: "auto" | "none" | "required" | "function";
+  /** Required when toolChoiceMode is "function". */
+  toolChoiceName?: string;
 };
 
 export type AgentRunContext = {

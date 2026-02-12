@@ -49,8 +49,32 @@ export type AgentCliOpts = {
   lane?: string;
   runId?: string;
   extraSystemPrompt?: string;
+  toolChoice?: string;
   local?: boolean;
 };
+
+type ToolChoiceWire = {
+  toolChoiceMode?: "auto" | "none" | "required" | "function";
+  toolChoiceName?: string;
+};
+
+function parseToolChoice(raw: string | undefined): ToolChoiceWire {
+  if (!raw) {
+    return {};
+  }
+  const normalized = raw.trim();
+  if (!normalized) {
+    return {};
+  }
+  if (normalized === "auto" || normalized === "none" || normalized === "required") {
+    return { toolChoiceMode: normalized };
+  }
+  if (normalized.startsWith("function:")) {
+    const name = normalized.slice("function:".length).trim();
+    return name ? { toolChoiceMode: "function", toolChoiceName: name } : {};
+  }
+  return {};
+}
 
 function parseTimeoutSeconds(opts: { cfg: ReturnType<typeof loadConfig>; timeout?: string }) {
   const raw =
@@ -115,6 +139,7 @@ export async function agentViaGatewayCommand(opts: AgentCliOpts, runtime: Runtim
 
   const channel = normalizeMessageChannel(opts.channel) ?? DEFAULT_CHAT_CHANNEL;
   const idempotencyKey = opts.runId?.trim() || randomIdempotencyKey();
+  const toolChoice = parseToolChoice(opts.toolChoice);
 
   const response = await withProgress(
     {
@@ -140,6 +165,8 @@ export async function agentViaGatewayCommand(opts: AgentCliOpts, runtime: Runtim
           timeout: timeoutSeconds,
           lane: opts.lane,
           extraSystemPrompt: opts.extraSystemPrompt,
+          toolChoiceMode: toolChoice.toolChoiceMode,
+          toolChoiceName: toolChoice.toolChoiceName,
           idempotencyKey,
         },
         expectFinal: true,
@@ -173,10 +200,18 @@ export async function agentViaGatewayCommand(opts: AgentCliOpts, runtime: Runtim
 }
 
 export async function agentCliCommand(opts: AgentCliOpts, runtime: RuntimeEnv, deps?: CliDeps) {
+  const toolChoice = parseToolChoice(opts.toolChoice);
   const localOpts = {
     ...opts,
     agentId: opts.agent,
     replyAccountId: opts.replyAccount,
+    streamParams:
+      toolChoice.toolChoiceMode || toolChoice.toolChoiceName
+        ? {
+            toolChoiceMode: toolChoice.toolChoiceMode,
+            toolChoiceName: toolChoice.toolChoiceName,
+          }
+        : undefined,
   };
   if (opts.local === true) {
     return await agentCommand(localOpts, runtime, deps);

@@ -28,6 +28,7 @@ export function resolveExtraParams(params: {
 type CacheRetention = "none" | "short" | "long";
 type CacheRetentionStreamOptions = Partial<SimpleStreamOptions> & {
   cacheRetention?: CacheRetention;
+  toolChoice?: "auto" | "none" | "required" | { type: "function"; function: { name: string } };
 };
 
 /**
@@ -83,6 +84,31 @@ function createStreamFnWithExtraParams(
   const cacheRetention = resolveCacheRetention(extraParams, provider);
   if (cacheRetention) {
     streamParams.cacheRetention = cacheRetention;
+  }
+  const toolChoiceMode =
+    typeof extraParams?.toolChoiceMode === "string" ? extraParams.toolChoiceMode : undefined;
+  const toolChoiceName =
+    typeof extraParams?.toolChoiceName === "string" ? extraParams.toolChoiceName : undefined;
+  if (toolChoiceMode === "function") {
+    if (toolChoiceName) {
+      streamParams.toolChoice = { type: "function", function: { name: toolChoiceName } };
+    }
+  } else if (
+    toolChoiceMode === "auto" ||
+    toolChoiceMode === "none" ||
+    toolChoiceMode === "required"
+  ) {
+    streamParams.toolChoice = toolChoiceMode;
+  } else if (typeof extraParams?.toolChoice === "string") {
+    const raw = extraParams.toolChoice;
+    if (raw === "auto" || raw === "none" || raw === "required") {
+      streamParams.toolChoice = raw;
+    } else if (raw.startsWith("function:")) {
+      const name = raw.slice("function:".length).trim();
+      if (name) {
+        streamParams.toolChoice = { type: "function", function: { name } };
+      }
+    }
   }
 
   if (Object.keys(streamParams).length === 0) {

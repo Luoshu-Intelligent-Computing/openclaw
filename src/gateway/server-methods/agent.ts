@@ -80,6 +80,8 @@ export const agentHandlers: GatewayRequestHandlers = {
       groupSpace?: string;
       lane?: string;
       extraSystemPrompt?: string;
+      toolChoiceMode?: "auto" | "none" | "required" | "function";
+      toolChoiceName?: string;
       idempotencyKey: string;
       timeout?: number;
       label?: string;
@@ -351,6 +353,13 @@ export const agentHandlers: GatewayRequestHandlers = {
     respond(true, accepted, undefined, { runId });
 
     const resolvedThreadId = explicitThreadId ?? deliveryPlan.resolvedThreadId;
+    const streamParams =
+      request.toolChoiceMode || request.toolChoiceName
+        ? {
+            toolChoiceMode: request.toolChoiceMode,
+            toolChoiceName: request.toolChoiceName,
+          }
+        : undefined;
 
     void agentCommand(
       {
@@ -383,6 +392,7 @@ export const agentHandlers: GatewayRequestHandlers = {
         runId,
         lane: request.lane,
         extraSystemPrompt: request.extraSystemPrompt,
+        streamParams,
       },
       defaultRuntime,
       context.deps,
